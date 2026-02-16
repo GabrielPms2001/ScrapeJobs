@@ -8,9 +8,10 @@ def main() -> None:
         jobs = scrape_jobs(
             site_name=["linkedin", "indeed", "glassdoor"], # Sites de emprego para coletar as vagas
             search_term="Analista de Dados", # Termo de busca para as vagas de emprego
-            location="Brasil", # Coletar vagas em todo o Brasil
+            location="Serra, ES", # Coletar vagas em todo o Brasil
             results_wanted=100, # Coletar até 100 vagas
             hours_old=72,  # Vagas postadas nas ultimas 72 horas
+            country_indeed= "Brazil"
         )
         # A função scrape_jobs retorna uma lista de dicionários, onde cada dicionário representa uma vaga de emprego com informações como título, empresa, local, data de postagem, etc.
     except Exception as exc: 
