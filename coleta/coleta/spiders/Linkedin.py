@@ -20,6 +20,11 @@ class LinkedinSpider(scrapy.Spider):
         products = response.css('div.base-card')
 
         for product in products:
+            image = (
+            product.css('img::attr(src)').get()
+            or product.css('img::attr(data-delayed-url)').get()
+            or product.css('img::attr(data-ghost-url)').get()
+            )
             
             yield {
                 'title': product.css('h3.base-search-card__title::text').get(default='').strip(),
@@ -27,5 +32,5 @@ class LinkedinSpider(scrapy.Spider):
                 'location': product.css('span.job-search-card__location::text').get(default='').strip(),
                 'date_posted': product.css('time::attr(datetime)').get(default='').strip(),
                 'job_link': product.css('a.base-card__full-link::attr(href)').get(default='').strip(),
-                'media': product.css('img.base-search-card__image::attr(src)').get(default='').strip(),
+                'Logo_image': image #product.css('img.search-entity-image::attr(src)').get(default='').strip(),
             }
