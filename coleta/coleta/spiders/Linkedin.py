@@ -22,10 +22,10 @@ class LinkedinSpider(scrapy.Spider):
         for product in products:
             
             yield {
-                'title': product.css('h3.base-search-card__title::text').get(),
-                'company': product.css('h4.base-search-card__subtitle::text').get(),
-                'location': product.css('span.job-search-card__location::text').get(),
-                'date_posted': product.css('time::attr(datetime)').get(),
-                'job_link': product.css('a.base-card__full-link::attr(href)').get(),
-                'media': product.css('img.base-search-card__image::attr(src)').get(),
+                'title': product.css('h3.base-search-card__title::text').get(default='').strip(),
+                'company': product.css('a.hidden-nested-link::text').get(default='').strip(),
+                'location': product.css('span.job-search-card__location::text').get(default='').strip(),
+                'date_posted': product.css('time::attr(datetime)').get(default='').strip(),
+                'job_link': product.css('a.base-card__full-link::attr(href)').get(default='').strip(),
+                'media': product.css('img.base-search-card__image::attr(src)').get(default='').strip(),
             }
