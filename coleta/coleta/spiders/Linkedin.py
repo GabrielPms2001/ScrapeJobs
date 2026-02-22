@@ -32,5 +32,5 @@ class LinkedinSpider(scrapy.Spider):
                 'location': product.css('span.job-search-card__location::text').get(default='').strip(),
                 'date_posted': product.css('time::attr(datetime)').get(default='').strip(),
                 'job_link': product.css('a.base-card__full-link::attr(href)').get(default='').strip(),
-                'Logo_image': image #product.css('img.search-entity-image::attr(src)').get(default='').strip(),
+                'Logo_image': image.strip() if image else None
             }
