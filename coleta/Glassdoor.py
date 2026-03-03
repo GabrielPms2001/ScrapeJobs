@@ -1,49 +1,52 @@
 import csv
-from playwright.asinc_api import async_playwright
-from lxml.html import fromstring
+import asyncio
+from playwright.async_api import async_playwright
+from bs4 import BeautifulSoup
+
+URL = "https://www.glassdoor.com.br/Vaga/serra-es-analista-de-bi-j%C3%BAnior-vagas-SRCH_IL.0,8_IC2457818_KO9,30.htm"
 
 async def scrape_glassdoor_jobs():
-    #setup the playwright browser with proxy to avoid detection
     async with async_playwright() as p:
         browser = await p.chromium.launch(
-            headless=False,
-            proxy={
-                "server": '', "username": '', "password": ''}
+            headless=False,   # importante pro Glassdoor
+            slow_mo=50        # navegação mais humana
         )
         page = await browser.new_page()
-        await page.goto('' timeout=60000)
 
-        #Retrieve the page content and close the browser
-        content =  await page.content()
+        await page.goto(URL, timeout=60000)
+        await page.wait_for_timeout(5000)  # espera JS carregar
+
+        html = await page.content()
         await browser.close()
 
-        #Parse the HTML content using lxml
-        parser = fromstring(content)
-        job_posting_elements = parser.xpath('//li[@data-test="jobListing"]')
+    soup = BeautifulSoup(html, "html.parser")
 
-        #Extract data for each job listing
-        jobs_data = []
-        for job in job_posting_elements:
-            title = job.xpath('.//a[@data-test="job-link"]/text()')
-            company = job.xpath('.//div[@data-test="companyName"]/text()')
-            location = job.xpath('.//div[@data-test="location"]/text()')
-            salary = job.xpath('.//span[@data-test="salary-snippet"]/text()')
+    jobs_data = []
 
-            job_data = {
-                'title': title[0].strip() if title else '',
-                'company': company[0].strip() if company else '',
-                'location': location[0].strip() if location else '',
-                'salary': salary[0].strip() if salary else ''
-            }
-            jobs_data.append(job_data)
+    job_cards = soup.select('li[data-test="jobListing"]')
 
-        # Save the data to a CSV file
-        with open('glassdoor_jobs.csv', 'w', newline='', encoding='utf-8') as file:
-            writer = csv.DictWriter(file, fieldnames=['title', 'company', 'location', 'salary'])
-            writer.writeheader()
-            writer.writerows(jobs_data)
+    for job in job_cards:
+        title = job.select_one('a[data-test="job-link"]')
+        company = job.select_one('div[data-test="companyName"]')
+        location = job.select_one('div[data-test="location"]')
+        salary = job.select_one('span[data-test="salary-snippet"]')
 
-# Run the Scraping function
-import asyncio
-asyncio.run(scrape_glassdoor_jobs())
-            
+        jobs_data.append({
+            "title": title.text.strip() if title else "",
+            "company": company.text.strip() if company else "",
+            "location": location.text.strip() if location else "",
+            "salary": salary.text.strip() if salary else ""
+        })
+
+    with open("glassdoor_jobs.csv", "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=["title", "company", "location", "salary"]
+        )
+        writer.writeheader()
+        writer.writerows(jobs_data)
+
+    print(f"✅ {len(jobs_data)} vagas salvas com sucesso!")
+
+if __name__ == "__main__":
+    asyncio.run(scrape_glassdoor_jobs())
