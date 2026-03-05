@@ -4,11 +4,14 @@ import scrapy
 class LinkedinSpider(scrapy.Spider):
     name = "Linkedin"
     allowed_domains = ["www.linkedin.com"]
+    page_count = 1
+    max_pages = 5
 
     vagas = { 
         "Analista de dados": "?keywords=analista%20de%20dados&geoId=106077525",
         "Analista de dados júnior": "?keywords=analista%20de%20dados%20j%C3%BAnior&geoId=106077525",
-        "Analista de BI júnior": "?keywords=analista%20de%20bi%20j%C3%BAnior&geoId=106077525"
+        "Analista de BI júnior": "?keywords=analista%20de%20bi%20j%C3%BAnior&geoId=106077525",
+        "Estagio em Dados": "?keywords=est%C3%A1gio%20em%20dados&geoId=106077525",
     }
 
     def start_requests(self):
@@ -34,3 +37,9 @@ class LinkedinSpider(scrapy.Spider):
                 'job_link': product.css('a.base-card__full-link::attr(href)').get(default='').strip(),
                 'Logo_image': image.strip() if image else None
             }
+        if self.page_count < self.max_pages:
+            next_page = response.css('button[aria-label="Next"]::attr(aria-disabled)').get()
+            if next_page:
+                self.page_count += 1
+        yield scrapy.Request(url=next_page, callback=self.parse)
+
