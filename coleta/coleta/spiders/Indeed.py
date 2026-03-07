@@ -1,84 +1,47 @@
-import re
-import json
 import scrapy
-from urllib.parse import urlencode
 
-class IndeedJobSpider(scrapy.Spider):
-    name = "indeed_jobs"
-    custom_settings = {
-        'FEEDS': { 'data/%(name)s_%(time)s.csv': { 'format': 'csv',}}
-        }
 
-    def get_indeed_search_url(self, keyword, location, offset=0):
-        parameters = {"q": keyword, "l": location, "filter": 0, "start": offset}
-        return "https://br.indeed.com/jobs?" + urlencode(parameters)
+class IndeedSpider(scrapy.Spider):
 
+    name = "indeed"
 
     def start_requests(self):
-        keyword_list = ['software engineer']
-        location_list = ['São Paulo']
-        for keyword in keyword_list:
-            for location in location_list:
-                indeed_jobs_url = self.get_indeed_search_url(keyword, location)
-                yield scrapy.Request(url=indeed_jobs_url, callback=self.parse_search_results, meta={'keyword': keyword, 'location': location, 'offset': 0})
 
-    def parse_search_results(self, response):
-        location = response.meta['location']
-        keyword = response.meta['keyword'] 
-        offset = response.meta['offset'] 
-        script_tag  = re.findall(r'window.mosaic.providerData\["mosaic-provider-jobcards"\]=(\{.+?\});', response.text)
-        if script_tag is not None:
-            json_blob = json.loads(script_tag[0])
+        url = "https://br.indeed.com/jobs?q=estagio+em+dados&l=Serra%2C+ES"
 
-            ## Extract Jobs From Search Page
-            jobs_list = json_blob['metaData']['mosaicProviderJobCardsModel']['results']
-            for index, job in enumerate(jobs_list):
-                if job.get('jobkey') is not None:
-                    job_url = 'https://br.indeed.com/m/basecamp/viewjob?viewtype=embedded&jk=' + job.get('jobkey')
-                    yield scrapy.Request(url=job_url, 
-                            callback=self.parse_job, 
-                            meta={
-                                'keyword': keyword, 
-                                'location': location, 
-                                'page': round(offset / 10) + 1 if offset > 0 else 1,
-                                'position': index,
-                                'jobKey': job.get('jobkey'),
-                            })
+        yield scrapy.Request(
+            url,
+            meta={
+                "playwright": True,
+                "playwright_include_page": True
+            },
+            callback=self.parse
+        )
 
-            
-            # Paginate Through Jobs Pages
-            if offset == 0:
-                meta_data = json_blob["metaData"]["mosaicProviderJobCardsModel"]["tierSummaries"]
-                num_results = sum(category["jobCount"] for category in meta_data)
-                if num_results > 1000:
-                    num_results = 50
-                
-                for offset in range(10, num_results + 10, 10):
-                    url = self.get_indeed_search_url(keyword, location, offset)
-                    yield scrapy.Request(url=url, callback=self.parse_search_results, meta={'keyword': keyword, 'location': location, 'offset': offset})
-    
-    def parse_job(self, response):
-        location = response.meta['location']
-        keyword = response.meta['keyword'] 
-        page = response.meta['page'] 
-        position = response.meta['position'] 
+    async def parse(self, response):
 
-        
-        script_tag  = re.findall(r"_initialData=(\{.+?\});", response.text)
-        if script_tag is not None:
-            json_blob = json.loads(script_tag[0])
-            job = json_blob["jobInfoWrapperModel"]["jobInfoModel"]['jobInfoHeaderModel']
-            sanitizedJobDescription= json_blob["jobInfoWrapperModel"]["jobInfoModel"]['sanitizedJobDescription']
+        jobs = response.css("div.job_seen_beacon")
+
+        for job in jobs:
+
             yield {
-                'keyword': keyword,
-                'location': location,
-                'page': page,
-                'position': position,
-                'company': job.get('companyName'),
-                'jobkey': response.meta['jobKey'],
-                'jobTitle': job.get('jobTitle'),
-                'jobDescription': sanitizedJobDescription
+
+                "titulo": job.css("h2 a span::text").get(),
+
+                "empresa": job.css("div span.company-name::text").get(),
+
+                "local": job.css("div div span div::text").get(),
+
+                "link": response.urljoin(
+                    job.css("h2 a::attr(href)").get()
+                )
             }
 
+        next_page = response.css("a[data-testid='pagination-page-next']::attr(href)").get()
 
-
+        if next_page:
+            yield scrapy.Request(
+                response.urljoin(next_page),
+                meta={"playwright": True},
+                callback=self.parse
+            )

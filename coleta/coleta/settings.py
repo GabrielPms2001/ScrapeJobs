@@ -26,6 +26,23 @@ ROBOTSTXT_OBEY = False
 CONCURRENT_REQUESTS_PER_DOMAIN = 1
 DOWNLOAD_DELAY = 1
 
+TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
+
+DOWNLOAD_HANDLERS = {
+    "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+    "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+}
+
+PLAYWRIGHT_BROWSER_TYPE = "chromium"
+
+PLAYWRIGHT_LAUNCH_OPTIONS = {
+    "headless": True
+}
+
+CONCURRENT_REQUESTS = 2
+DOWNLOAD_DELAY = 3
+RANDOMIZE_DOWNLOAD_DELAY = True
+
 # Disable cookies (enabled by default)
 #COOKIES_ENABLED = False
 
