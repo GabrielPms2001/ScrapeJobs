@@ -12,6 +12,9 @@ class LinkedinSpider(scrapy.Spider):
         "Analista de dados júnior": "?keywords=analista%20de%20dados%20j%C3%BAnior&geoId=106077525",
         "Analista de BI júnior": "?keywords=analista%20de%20bi%20j%C3%BAnior&geoId=106077525",
         "Estagio em Dados": "?keywords=est%C3%A1gio%20em%20dados&geoId=106077525",
+        "Analista de Dados (Região Brasil)": "?keywords=analista%20de%20dados&geoId=106057199",
+        "Estagio em Dados (Região Brasil)": "?keywords=est%C3%A1gio%20em%20dados&geoId=106057199",
+        "Estagio de Engenharia de Dados": "?keywords=est%C3%A1gio%20de%20engenharia%20de%20dados&geoId=106057199",
     }
 
     def start_requests(self):

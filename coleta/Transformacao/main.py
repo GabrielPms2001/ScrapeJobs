@@ -35,6 +35,7 @@ df = pd.read_json(JSON_PATH, lines=True)
 # =============================
 
 df['_data_coleta'] = datetime.now()
+df['_Plataforma'] = "Linkedin"
 
 # =============================
 # 6. TRATAMENTO DE DADOS
