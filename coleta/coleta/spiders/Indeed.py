@@ -28,9 +28,9 @@ class IndeedSpider(scrapy.Spider):
 
                 "titulo": job.css("h2 a span::text").get(),
 
-                "empresa": job.css("div span.company-name::text").get(),
+                "empresa": job.css('span[data-testid="company-name"]::text').get(),
 
-                "local": job.css("div div span div::text").get(),
+                "local": job.css('div[data-testid="text-location"]::text').get(),
 
                 "link": response.urljoin(
                     job.css("h2 a::attr(href)").get()
