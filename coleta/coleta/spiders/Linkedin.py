@@ -20,10 +20,17 @@ class LinkedinSpider(scrapy.Spider):
     def start_requests(self):
         for vaga_name, vaga_url in self.vagas.items():
             url = f"https://www.linkedin.com/jobs/search/{vaga_url}"
-            yield scrapy.Request(url=url, callback=self.parse)
+            yield scrapy.Request(
+                url=url,
+                callback=self.parse,
+                meta={
+                    "Vaga_name": vaga_name,
+                }
+            ) # Fazemos a requisição para a URL da API, passando o nome da categoria no meta para usar depois na função parse
 
     def parse(self, response):
         products = response.css('div.base-card')
+        Vaga_name = response.meta.get("Vaga_name")
 
         for product in products:
             image = (
@@ -33,6 +40,7 @@ class LinkedinSpider(scrapy.Spider):
             )
             
             yield {
+                'vaga_name': Vaga_name,
                 'title': product.css('h3.base-search-card__title::text').get(default='').strip(),
                 'company': product.css('a.hidden-nested-link::text').get(default='').strip(),
                 'location': product.css('span.job-search-card__location::text').get(default='').strip(),
